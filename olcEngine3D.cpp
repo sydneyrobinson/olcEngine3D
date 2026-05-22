@@ -1,4 +1,4 @@
-
+﻿
 #include "olcConsoleGameEngine.h"
 
 using namespace std; //good practice not to include this in header files
@@ -34,6 +34,8 @@ public:
 private:
     mesh meshCube;
     mat4x4 matProj; // projection matrix
+
+    float fTheta;
 
     void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m) // & gets memory address of i. o is the output
     {
@@ -102,17 +104,40 @@ public:
         return true;
     }
 
-    bool OnUserUpdate(float fElapsedtime) override
+    bool OnUserUpdate(float fElapsedTime) override
     {
         Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
         mat4x4 matRotZ, matRotX;
+        fTheta += 1.0f * fElapsedTime;
+
+        // Rotation Z
+        matRotZ.m[0][0] = cosf(fTheta);
+        matRotZ.m[0][1] = sinf(fTheta);
+        matRotZ.m[1][0] = -sinf(fTheta);
+        matRotZ.m[1][1] = cosf(fTheta);
+        matRotZ.m[2][2] = 1;
+        matRotZ.m[3][3] = 1;
+
+        // Rotation X
+        matRotX.m[0][0] = 1;
+        matRotX.m[1][1] = cosf(fTheta * 0.5f);
+        matRotX.m[1][2] = sinf(fTheta * 0.5f);
+        matRotX.m[2][1] = -sinf(fTheta * 0.5f);
+        matRotX.m[2][2] = cosf(fTheta * 0.5f);
+        matRotX.m[3][3] = 1;
+
         
 
-        // draw triangles. contained inside a vector inside a mesh
+        // Draw triangles. contained inside a vector inside a mesh
         for (auto tri : meshCube.tris)
         {
-            triangle triProjected, triTranslated; 
+            triangle triProjected, triTranslated,triRotatedZ, triRotatedZX; 
+
+            // Rotate in Z-Axis
+            MultiplyMatrixVector(tri.p[0], triRotatedZ.p[0], matRotZ);
+            MultiplyMatrixVector(tri.p[1], triRotatedZ.p[1], matRotZ);
+            MultiplyMatrixVector(tri.p[2], triRotatedZ.p[2], matRotZ);
 
             triTranslated = tri;
             triTranslated.p[0].z = tri.p[0].z + 3.0f;
@@ -166,3 +191,8 @@ int main()
 //   4. Use the Error List window to view errors
 //   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
 //   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+
+
+
+
+// finish tutorial, debug. see whats happening on screen.
