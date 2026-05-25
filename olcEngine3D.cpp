@@ -1,7 +1,7 @@
 ﻿
 #include "olcConsoleGameEngine.h"
-
 using namespace std; //good practice not to include this in header files
+
 
 struct vec3d
 {
@@ -15,7 +15,7 @@ struct triangle
 
 struct mesh
 {
-    vector<triangle> tris;
+    vector<triangle> tris; // "std::vector" is a dynamic array (can resize self). contians triangle elements
 };
 
 struct mat4x4
@@ -39,17 +39,17 @@ private:
 
     void MultiplyMatrixVector(vec3d &i, vec3d &o, mat4x4 &m) // & gets memory address of i. o is the output
     {
-        o.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z * m.m[2][0] + m.m[3][0]; //implying that 4th element of input vector is 1, so only sum last elem here
+
+        //implying that 4th element of input vector is 1, so only sum last elem here
+        o.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z * m.m[2][0] + m.m[3][0];
         o.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z * m.m[2][1] + m.m[3][1];
         o.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z * m.m[2][2] + m.m[3][2];
         float w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z * m.m[2][3] + m.m[3][3];
-    
+
         if (w != 0.0f) // change back to 3d cartesian space
         {
             o.x /= w; o.y /= w; o.z /= w;
         }
-    
-    
     }
 
 public:
@@ -99,15 +99,15 @@ public:
         matProj.m[2][3] = 1.0f;
         matProj.m[3][3] = 0.0f;
 
-
-
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override
     {
+        // Clear screen
         Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
+        // set up roation matrices
         mat4x4 matRotZ, matRotX;
         fTheta += 1.0f * fElapsedTime;
 
@@ -139,34 +139,42 @@ public:
             MultiplyMatrixVector(tri.p[1], triRotatedZ.p[1], matRotZ);
             MultiplyMatrixVector(tri.p[2], triRotatedZ.p[2], matRotZ);
 
-            triTranslated = tri;
-            triTranslated.p[0].z = tri.p[0].z + 3.0f;
-            triTranslated.p[1].z = tri.p[1].z + 3.0f;
-            triTranslated.p[2].z = tri.p[2].z + 3.0f;
+            // rotate in x-axis
+            MultiplyMatrixVector(triRotatedZ.p[0], triRotatedZX.p[0], matRotX);
+            MultiplyMatrixVector(triRotatedZ.p[1], triRotatedZX.p[1], matRotX);
+            MultiplyMatrixVector(triRotatedZ.p[2], triRotatedZX.p[2], matRotX);
 
+            // Offset into the screen
+            triTranslated = triRotatedZX;
+            triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
+            triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
+            triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+
+
+            // project triangle from 3D to 2D
             MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj); // reference each point
-            MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
-            MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
+            MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
+            MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
 
 
             // Scale into view
             triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f; // between 0 and 2
             triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
             triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
-
-            triProjected.p[0].x *=  0.5f * (float)ScreenWidth();
-            triProjected.p[0].y *= 0.5f * (float)ScreenWidth();
+            triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
+            triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
             triProjected.p[1].x *= 0.5f * (float)ScreenWidth();
-            triProjected.p[1].y *= 0.5f * (float)ScreenWidth();
+            triProjected.p[1].y *= 0.5f * (float)ScreenHeight();
             triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
-            triProjected.p[2].y *= 0.5f * (float)ScreenWidth();
+            triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
+
+            // rasterize the triangle
             DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
                 triProjected.p[1].x, triProjected.p[1].y,
                 triProjected.p[2].x, triProjected.p[2].y,
                 PIXEL_SOLID, FG_WHITE);
-                
-        
+               
         }
 
         return true;
