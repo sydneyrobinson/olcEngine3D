@@ -213,13 +213,13 @@ public:
                 normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f) // can take any point from triTranslated because they lie in the same plane
                 // do opposite, then cube is open box!
             {
-                //ILLUMINATION -- only if you can see the tri
-                vec3d light_direction = { 0.0f, 0.0f, -1.0f }; // light twd player
+                // Illumination
+                vec3d light_direction = { 0.0f, 0.0f, -1.0f };
                 float l = sqrtf(light_direction.x * light_direction.x + light_direction.y * light_direction.y + light_direction.z * light_direction.z);
                 light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
 
-                float dp = normal.x * light_direction.x + normal.y + light_direction.y * normal.z * light_direction.z;
-                
+                // How similar is normal to light direction
+                float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
                
                 CHAR_INFO c = GetColour(dp); // console-specific stuff
                 triTranslated.col = c.Attributes;
