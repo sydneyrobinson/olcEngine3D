@@ -1,5 +1,7 @@
 ﻿
 #include "olcConsoleGameEngine.h"
+#include <fstream>
+#include <strstream>
 using namespace std; //good practice not to include this in header files
 
 struct vec3d
@@ -18,6 +20,44 @@ struct triangle
 struct mesh
 {
     vector<triangle> tris; // "std::vector" is a dynamic array (can resize self). contians triangle elements
+
+    bool LoadFromObjectFile(string sFilename) 
+    {
+        ifstream f(sFilename);
+        if (!f.is_open())
+            return false;
+
+        // Local cache of vertices
+        vector<vec3d> verts; // will disappear once finished loading the object
+
+        while (!f.eof())
+        {
+            char line[128]; //assumption on 128 char limit
+            f.getline(line, 128);
+
+            strstream s;
+            s << line;
+
+            char junk; // temporary
+
+            if (line[0] == 'v') // vector
+            {
+                vec3d v;
+                s >> junk >> v.x >> v.y >> v.z;
+                verts.push_back(v); // appends to temp pool
+            }
+
+            if (line[0] == 'f') // triangle
+            {
+                int f[3];
+                s >> junk >> f[0] >> f[1] >> f[2];
+                tris.push_back({ verts[f[0] - 1], verts[f[1] - 1], verts[f[2] - 1] }); // contruct triangle and push it to tri belonging to mesh
+                // -1 because all info in obj file starts counting from 1
+            }
+        }
+
+        return true;
+    }
 };
 
 struct mat4x4
