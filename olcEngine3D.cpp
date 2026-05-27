@@ -2,6 +2,7 @@
 #include "olcConsoleGameEngine.h"
 #include <fstream>
 #include <strstream>
+#include <algorithm>
 using namespace std; //good practice not to include this in header files
 
 struct vec3d
@@ -133,35 +134,36 @@ private:
 public:
     bool OnUserCreate() override
     {
-        meshCube.tris = { 
-            // use doubly nested initializer list. inside=triangle w 3 vectors. outside=standard vector
-            // see diagram in video at 14:00
+        //meshCube.tris = { 
+        //    // use doubly nested initializer list. inside=triangle w 3 vectors. outside=standard vector
+        //    // see diagram in video at 14:00
 
-            // SOUTH (face of cube)
-            { 0.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f },
-            { 0.0f, 0.0f, 0.0f,     1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f },
+        //    // SOUTH (face of cube)
+        //    { 0.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,   1.0f, 1.0f, 0.0f },
+        //    { 0.0f, 0.0f, 0.0f,     1.0f, 1.0f, 0.0f,   1.0f, 0.0f, 0.0f },
 
-            // EAST
-            { 1.0f, 0.0f, 0.0f,     1.0f, 1.0f, 0.0f,   1.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f, 0.0f,     1.0f, 1.0f, 1.0f,   1.0f, 0.0f, 1.0f },
+        //    // EAST
+        //    { 1.0f, 0.0f, 0.0f,     1.0f, 1.0f, 0.0f,   1.0f, 1.0f, 1.0f },
+        //    { 1.0f, 0.0f, 0.0f,     1.0f, 1.0f, 1.0f,   1.0f, 0.0f, 1.0f },
 
-            // NORTH
-            { 1.0f, 0.0f, 1.0f,     1.0f, 1.0f, 1.0f,   0.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f, 1.0f,     0.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f },
+        //    // NORTH
+        //    { 1.0f, 0.0f, 1.0f,     1.0f, 1.0f, 1.0f,   0.0f, 1.0f, 1.0f },
+        //    { 1.0f, 0.0f, 1.0f,     0.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f },
 
-            // WEST
-            { 0.0f, 0.0f, 1.0f,     0.0f, 1.0f, 1.0f,   0.0f, 1.0f, 0.0f },
-            { 0.0f, 0.0f, 1.0f,     0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 0.0f },
+        //    // WEST
+        //    { 0.0f, 0.0f, 1.0f,     0.0f, 1.0f, 1.0f,   0.0f, 1.0f, 0.0f },
+        //    { 0.0f, 0.0f, 1.0f,     0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 0.0f },
 
-            // TOP
-            { 0.0f, 1.0f, 0.0f,     0.0f, 1.0f, 1.0f,   1.0f, 1.0f, 1.0f },
-            { 0.0f, 1.0f, 0.0f,     1.0f, 1.0f, 1.0f,   1.0f, 1.0f, 0.0f },   
+        //    // TOP
+        //    { 0.0f, 1.0f, 0.0f,     0.0f, 1.0f, 1.0f,   1.0f, 1.0f, 1.0f },
+        //    { 0.0f, 1.0f, 0.0f,     1.0f, 1.0f, 1.0f,   1.0f, 1.0f, 0.0f },   
+        //
+        //    // BOTTOM
+        //    { 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 1.0f,   0.0f, 0.0f, 0.0f },
+        //    { 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 0.0f },
         
-            // BOTTOM
-            { 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 1.0f,   0.0f, 0.0f, 0.0f },
-            { 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 0.0f },
-        
-        };
+        //};
+        meshCube.LoadFromObjectFile("VideoShip.obj");
 
         // Projection Matrix
         float fNear = 0.1f;
@@ -205,7 +207,8 @@ public:
         matRotX.m[2][2] = cosf(fTheta * 0.5f);
         matRotX.m[3][3] = 1;
 
-        
+        vector<triangle> vecTrianglesToRaster;
+
 
         // Draw triangles. contained inside a vector inside a mesh
         for (auto tri : meshCube.tris)
@@ -224,9 +227,9 @@ public:
 
             // Offset into the screen
             triTranslated = triRotatedZX;
-            triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
-            triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
-            triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+            triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
+            triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
+            triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
 
             //after translated triangle into worldspace, but before any projection
             // use Cross-Product to get NORMALS
@@ -287,20 +290,33 @@ public:
                 triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
 
-                // rasterize the triangle
-                FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
-                    triProjected.p[1].x, triProjected.p[1].y,
-                    triProjected.p[2].x, triProjected.p[2].y,
-                    triProjected.sym, triProjected.col);
+                // store triangle for sorting
+                vecTrianglesToRaster.push_back(triProjected);
 
-                DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-                    triProjected.p[1].x, triProjected.p[1].y,
-                    triProjected.p[2].x, triProjected.p[2].y,
-                    PIXEL_SOLID, FG_BLACK);
-                
+                //Sort triangles from back to front
+                sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle& t1, triangle& t2) //lambda
+                    {
+                        //midpoints will give approximation
+                        float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f; 
+                        float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+                        return z1 > z2;
+                    });
             }
-            
-               
+              
+        }
+
+        for (auto& triProjected : vecTrianglesToRaster)
+        {
+            // rasterize the triangle
+            FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
+                triProjected.p[1].x, triProjected.p[1].y,
+                triProjected.p[2].x, triProjected.p[2].y,
+                triProjected.sym, triProjected.col);
+
+            /*DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
+                triProjected.p[1].x, triProjected.p[1].y,
+                triProjected.p[2].x, triProjected.p[2].y,
+                PIXEL_SOLID, FG_BLACK);*/
         }
 
         return true;
